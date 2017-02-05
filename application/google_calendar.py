@@ -84,9 +84,11 @@ def extract_datetime(datetime_text):
     return year, month, date, hour, minute, second
 
 
-def events2text(calendar_id='primary', max_results=100):
+def events2text(calendar_id, person, max_results=100):
     events = get_upcoming_events(calendar_id, max_results)
-    text = ''
+    text = '\n'
+    text += person + 'さん\n'
+
     for event in events:
         start = event['start'].get('dateTime', event['start'].get('date'))
         end = event['end'].get('dateTime', event['end'].get('date'))
@@ -153,7 +155,7 @@ def array2text(array):
     return text
 
 def freetime2text(calendar_id):
-    text = ''
+    text = '\n'
 
     freetime_dic = events2array(calendar_id)
 
@@ -192,7 +194,7 @@ def score(calendar_id='primary', max_results=10):
     return scores_dic
 
 def recomend2text(calendar_id):
-    text = ''
+    text = '\n'
 
     score_dic = {}
     day_list = []
@@ -219,15 +221,19 @@ def recomend2text(calendar_id):
 
         if sd_y in score_dic and sd_t in score_dic:
             score_sum = [x + y + z for (x, y, z) in zip(score_dic[sd_y], score_dic[sd], score_dic[sd_t])]
+            # print(sd, 'y:' ,score_dic[sd_y], 'td:', score_dic[sd], 'tm:', score_dic[sd_t], 'sum:', score_sum)
 
         elif sd_y in score_dic and sd_t not in score_dic:
             score_sum = [x + y for (x, y) in zip(score_dic[sd_y], score_dic[sd])]
+            # print(sd, 'y:' ,score_dic[sd_y], 'td:', score_dic[sd], 'tm:', [0, 0, 0], 'sum:', score_sum)
 
         elif sd_y not in score_dic and sd_t in score_dic:
             score_sum = [x + y for (x, y) in zip(score_dic[sd], score_dic[sd_t])]
+            # print(sd, 'y:' ,[0, 0, 0], 'td:', score_dic[sd], 'tm:', score_dic[sd_t], 'sum:', score_sum)
 
         else:
             score_sum = score_dic[sd]
+            # print(sd, 'y:' ,score_dic[sd], 'td:', [0, 0, 0], 'tm:', score_dic[sd], [0, 0, 0], 'sum:', score_sum)
 
         ans_dic1[sd] = max(score_sum)
         ans_dic2[sd] = score_sum
@@ -237,17 +243,38 @@ def recomend2text(calendar_id):
         c += 1
         if c < 4:
             strk = str(k)
-            text += strk[5:10] + 'が' + str(c) + '番におすすめです！\n'
+            text += strk[5:10] + 'を' + str(c) + '番におすすめします！\n'
+            text += '当日および前後二日間の予定時間の合計は・・・'
             text += 'Aさん:' + str(ans_dic2[k][0] / 2)\
                     + '時間 / Bさん:' + str(ans_dic2[k][1] / 2)\
-                    + '時間 / Cさん:' + str(ans_dic2[k][2] / 2) + '時間\n'
+                    + '時間 / Cさん:' + str(ans_dic2[k][2] / 2) + '時間です！\n'
+            text += '---------------------------------------------------------------------------------------------------------------------------------------\n'
+
+    return text
+
+def search2text(calendar_id, keyword, person, max_results=10):
+    events = get_upcoming_events(calendar_id, max_results)
+    text = '\n'
+
+    text += person + 'さん\n'
+
+    for event in events:
+        start = event['start'].get('dateTime', event['start'].get('date'))
+        end = event['end'].get('dateTime', event['end'].get('date'))
+
+        summary = event['summary']
+        sy, smo, sd, sh, smi, ss = extract_datetime(start)
+        ey, emo, ed, eh, emi, es = extract_datetime(end)
+
+        if keyword in summary:
+            text += '{}/{} {}:{}〜{}:{} {}\n'.format(smo, sd, sh, smi, eh, emi, summary)
 
     return text
 
 if __name__ == '__main__':
-    calendar_id = ['',\
-                   '',\
-                   '']
+    calendar_id = ['hoge@group.calendar.google.com',\
+                   'hogehoge@group.calendar.google.com',\
+                   'hogehogehoge@group.calendar.google.com']
 
     """
     text = ''
